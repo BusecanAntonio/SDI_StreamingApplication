@@ -1,21 +1,27 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 
 public class Viewer {
-    public static void main(String[] args) throws Exception {
+
+    public static void startForStreamer(String streamerName) throws Exception {
         Socket socket = new Socket("localhost", 5000);
+
+        OutputStream out = socket.getOutputStream();
+        out.write(("VIEWER " + streamerName + "\n").getBytes());
+
         InputStream in = socket.getInputStream();
 
-        JFrame frame = new JFrame("Viewer");
+        JFrame f = new JFrame("Viewer - " + streamerName);
         JLabel label = new JLabel();
-        frame.add(label);
-        frame.setSize(640, 480);
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.add(label);
+        f.setSize(800, 600);
+        f.setVisible(true);
+        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         while (true) {
             byte[] sizeArr = in.readNBytes(4);
@@ -30,7 +36,7 @@ public class Viewer {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(frameBytes));
 
             label.setIcon(new ImageIcon(img));
-            frame.repaint();
+            f.repaint();
         }
     }
 }

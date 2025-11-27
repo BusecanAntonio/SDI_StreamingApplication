@@ -1,41 +1,38 @@
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class Streamer {
+
     public static void main(String[] args) throws Exception {
+
+        String name = JOptionPane.showInputDialog("Numele streamerului:");
+
+        // trimitem numele streamerului catre ControlServer
+        try (Socket ctrl = new Socket("localhost", 6000);
+             PrintWriter out = new PrintWriter(ctrl.getOutputStream(), true)) {
+            out.println("STREAMER " + name);
+        }
+
+        // conectare la VideoServer
         Socket socket = new Socket("localhost", 5000);
         OutputStream out = socket.getOutputStream();
 
-        int frameNumber = 0;
+        // anuntam serverul video
+        out.write(("STREAMER " + name + "\n").getBytes());
+
+        Robot robot = new Robot();
+        Rectangle screen = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
 
         while (true) {
-
-            // 1. Cream un frame (imagine) direct din cod
-            BufferedImage img = new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g = img.createGraphics();
-
-            // Fundal simplu colorat
-            g.setColor(Color.BLUE);
-            g.fillRect(0, 0, 640, 480);
-
-            // Text care se schimbă
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 40));
-            g.drawString("Frame: " + frameNumber, 50, 200);
-
-            g.dispose();
-            frameNumber++;
-
-            // 2. Convertim imaginea în JPG
+            BufferedImage img = robot.createScreenCapture(screen);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(img, "jpg", baos);
             byte[] data = baos.toByteArray();
 
-            // 3. Trimitem lungimea frame-ului
             out.write(new byte[]{
                     (byte)(data.length >> 24),
                     (byte)(data.length >> 16),
@@ -43,12 +40,10 @@ public class Streamer {
                     (byte)(data.length)
             });
 
-            // 4. Trimitem frame-ul
             out.write(data);
             out.flush();
 
-            // 5. Frame rate (~30 FPS)
-            Thread.sleep(33);
+            Thread.sleep(13); // ~30 FPS
         }
     }
 }
