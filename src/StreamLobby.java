@@ -21,9 +21,7 @@ public class StreamLobby extends JFrame {
     public StreamLobby() {
         super("Stream Lobby");
 
-        this.serverIp = NetworkDiscovery.findServerIp();
-        System.out.println("Lobby: Server gasit la: " + serverIp);
-
+        findAndSetServerIp();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(300, 400);
@@ -57,9 +55,21 @@ public class StreamLobby extends JFrame {
         refreshStreamers(); // Refresh initial
     }
 
+    private void findAndSetServerIp() {
+        this.serverIp = NetworkDiscovery.findServerIp();
+        if (this.serverIp == null) {
+            this.serverIp = JOptionPane.showInputDialog(this, "Nu am gasit serverul automat. Introdu IP-ul serverului:");
+            if (this.serverIp == null || this.serverIp.trim().isEmpty()) {
+                // Fallback la localhost daca se anuleaza
+                this.serverIp = "127.0.0.1";
+            }
+        }
+        System.out.println("Lobby: Server setat la: " + this.serverIp);
+    }
+
     private void openSelectedStream() {
         String selected = streamerList.getSelectedValue();
-        if (selected == null) {
+        if (selected == null || selected.startsWith("Serverul")) {
             JOptionPane.showMessageDialog(this,
                     "Selecteaza mai intai un streamer.",
                     "Nimic selectat",
@@ -86,25 +96,28 @@ public class StreamLobby extends JFrame {
         new Thread(() -> {
             List<String> streamers = fetchStreamersFromServer();
             if (streamers == null) {
-                // Daca nu gaseste serverul, incearca din nou
-                this.serverIp = NetworkDiscovery.findServerIp();
-                System.out.println("Lobby: Reincercare... Server gasit la: " + serverIp);
-                streamers = fetchStreamersFromServer();
-            }
-
-            if (streamers == null) {
-                 SwingUtilities.invokeLater(() -> {
-                    streamerListModel.clear();
-                    streamerListModel.addElement("Serverul nu raspunde...");
+                SwingUtilities.invokeLater(() -> {
+                    if (streamerListModel.isEmpty() || !streamerListModel.get(0).startsWith("Serverul")) {
+                         streamerListModel.clear();
+                         streamerListModel.addElement("Serverul nu raspunde la " + serverIp);
+                    }
                 });
                 return;
             }
 
             List<String> finalStreamers = streamers;
             SwingUtilities.invokeLater(() -> {
+                // Salvam selectia curenta
+                String selected = streamerList.getSelectedValue();
+                
                 streamerListModel.clear();
                 for (String s : finalStreamers) {
                     streamerListModel.addElement(s);
+                }
+                
+                // Restauram selectia daca inca exista
+                if (selected != null && finalStreamers.contains(selected)) {
+                    streamerList.setSelectedValue(selected, true);
                 }
             });
         }).start();
@@ -117,6 +130,7 @@ public class StreamLobby extends JFrame {
 
             out.println("LIST");
             String line = in.readLine();
+            
             if (line == null || line.isEmpty()) {
                 return new ArrayList<>();
             }
@@ -132,7 +146,7 @@ public class StreamLobby extends JFrame {
             return result;
 
         } catch (IOException e) {
-            System.err.println("Nu s-a putut obtine lista de streameri: " + e.getMessage());
+            // System.err.println("Eroare conexiune Lobby -> Server: " + e.getMessage());
             return null;
         }
     }

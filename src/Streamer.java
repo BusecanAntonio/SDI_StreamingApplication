@@ -9,9 +9,20 @@ public class Streamer {
 
     public static void main(String[] args) throws Exception {
         String serverIp = NetworkDiscovery.findServerIp();
+        if (serverIp == null) {
+            serverIp = JOptionPane.showInputDialog("Nu am gasit serverul automat. Introdu IP-ul serverului:");
+            if (serverIp == null || serverIp.trim().isEmpty()) {
+                System.out.println("Pornire anulata.");
+                return;
+            }
+        }
         System.out.println("Server gasit la: " + serverIp);
 
         String name = JOptionPane.showInputDialog("Numele streamerului:");
+        if (name == null || name.trim().isEmpty()) {
+            System.out.println("Pornire anulata, nu a fost introdus un nume.");
+            return;
+        }
 
         // trimitem numele streamerului catre ControlServer
         try (Socket ctrl = new Socket(serverIp, 6000);

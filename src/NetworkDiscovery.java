@@ -11,6 +11,10 @@ public class NetworkDiscovery {
     private static final String DISCOVERY_REQUEST = "STREAM_SERVER_REQUEST";
     private static final String DISCOVERY_RESPONSE = "STREAM_SERVER_RESPONSE";
 
+    /**
+     * Incearca sa gaseasca IP-ul serverului prin UDP Broadcast.
+     * @return IP-ul serverului sub forma de String, sau null daca nu este gasit.
+     */
     public static String findServerIp() {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
@@ -41,7 +45,7 @@ public class NetworkDiscovery {
             // Asteapta raspuns
             byte[] recvBuf = new byte[15000];
             DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-            socket.setSoTimeout(2000); // Asteapta maxim 2 secunde
+            socket.setSoTimeout(3000); // Asteapta maxim 3 secunde
             socket.receive(receivePacket);
 
             String message = new String(receivePacket.getData()).trim();
@@ -49,10 +53,10 @@ public class NetworkDiscovery {
                 return receivePacket.getAddress().getHostAddress();
             }
         } catch (Exception e) {
-            // Nu a gasit serverul, incearca pe localhost ca fallback
-            return "localhost";
+            // Nu a gasit serverul
+            return null;
         }
-        return "localhost";
+        return null;
     }
 
     public static void startServerListener() {
