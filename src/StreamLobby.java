@@ -15,11 +15,15 @@ public class StreamLobby extends JFrame {
     private final DefaultListModel<String> streamerListModel = new DefaultListModel<>();
     private final JList<String> streamerList = new JList<>(streamerListModel);
 
-    private final String controlHost = "localhost";
+    private String serverIp;
     private final int controlPort = 6000;
 
     public StreamLobby() {
         super("Stream Lobby");
+
+        this.serverIp = NetworkDiscovery.findServerIp();
+        System.out.println("Lobby: Server gasit la: " + serverIp);
+
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(300, 400);
@@ -50,6 +54,7 @@ public class StreamLobby extends JFrame {
 
         Timer timer = new Timer(2000, e -> refreshStreamers());
         timer.start();
+        refreshStreamers(); // Refresh initial
     }
 
     private void openSelectedStream() {
@@ -65,7 +70,7 @@ public class StreamLobby extends JFrame {
 
         new Thread(() -> {
             try {
-                Viewer.startForStreamer(selected);
+                Viewer.startForStreamer(selected, serverIp);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 SwingUtilities.invokeLater(() ->
@@ -80,11 +85,25 @@ public class StreamLobby extends JFrame {
     private void refreshStreamers() {
         new Thread(() -> {
             List<String> streamers = fetchStreamersFromServer();
-            if (streamers == null) return;
+            if (streamers == null) {
+                // Daca nu gaseste serverul, incearca din nou
+                this.serverIp = NetworkDiscovery.findServerIp();
+                System.out.println("Lobby: Reincercare... Server gasit la: " + serverIp);
+                streamers = fetchStreamersFromServer();
+            }
 
+            if (streamers == null) {
+                 SwingUtilities.invokeLater(() -> {
+                    streamerListModel.clear();
+                    streamerListModel.addElement("Serverul nu raspunde...");
+                });
+                return;
+            }
+
+            List<String> finalStreamers = streamers;
             SwingUtilities.invokeLater(() -> {
                 streamerListModel.clear();
-                for (String s : streamers) {
+                for (String s : finalStreamers) {
                     streamerListModel.addElement(s);
                 }
             });
@@ -92,7 +111,7 @@ public class StreamLobby extends JFrame {
     }
 
     private List<String> fetchStreamersFromServer() {
-        try (Socket socket = new Socket(controlHost, controlPort);
+        try (Socket socket = new Socket(serverIp, controlPort);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 

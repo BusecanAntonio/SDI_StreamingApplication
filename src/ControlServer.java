@@ -8,6 +8,9 @@ public class ControlServer {
             Collections.synchronizedSet(new HashSet<>());
 
     public static void main(String[] args) throws Exception {
+        // Porneste listener-ul pentru auto-discovery
+        NetworkDiscovery.startServerListener();
+
         ServerSocket server = new ServerSocket(6000);
         System.out.println("ControlServer pornit pe portul 6000.");
 

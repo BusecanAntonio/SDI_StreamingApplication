@@ -8,17 +8,19 @@ import java.net.Socket;
 public class Streamer {
 
     public static void main(String[] args) throws Exception {
+        String serverIp = NetworkDiscovery.findServerIp();
+        System.out.println("Server gasit la: " + serverIp);
 
         String name = JOptionPane.showInputDialog("Numele streamerului:");
 
         // trimitem numele streamerului catre ControlServer
-        try (Socket ctrl = new Socket("localhost", 6000);
+        try (Socket ctrl = new Socket(serverIp, 6000);
              PrintWriter out = new PrintWriter(ctrl.getOutputStream(), true)) {
             out.println("STREAMER " + name);
         }
 
         // conectare la VideoServer
-        Socket socket = new Socket("localhost", 5000);
+        Socket socket = new Socket(serverIp, 5000);
         OutputStream out = socket.getOutputStream();
 
         // anuntam serverul video

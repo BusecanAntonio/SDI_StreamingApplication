@@ -8,8 +8,8 @@ import java.net.Socket;
 
 public class Viewer {
 
-    public static void startForStreamer(String streamerName) throws Exception {
-        Socket socket = new Socket("localhost", 5000);
+    public static void startForStreamer(String streamerName, String serverIp) throws Exception {
+        Socket socket = new Socket(serverIp, 5000);
 
         OutputStream out = socket.getOutputStream();
         out.write(("VIEWER " + streamerName + "\n").getBytes());
