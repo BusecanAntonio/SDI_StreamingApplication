@@ -8,6 +8,9 @@ import java.net.Socket;
 public class Streamer {
 
     public static void main(String[] args) throws Exception {
+        // Dezactivam cache-ul pe disc pentru ImageIO (rezolva eroarea de AccessDenied si e mai rapid)
+        ImageIO.setUseCache(false);
+
         String serverIp = NetworkDiscovery.findServerIp();
         if (serverIp == null) {
             serverIp = JOptionPane.showInputDialog("Nu am gasit serverul automat. Introdu IP-ul serverului:");
