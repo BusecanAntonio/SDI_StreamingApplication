@@ -24,7 +24,7 @@ public class StreamLobby extends JFrame {
         findAndSetServerIp();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(300, 400);
+        setSize(350, 450);
         setLocationRelativeTo(null);
 
         streamerList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -32,6 +32,9 @@ public class StreamLobby extends JFrame {
 
         JButton viewButton = new JButton("Vizualizează stream-ul selectat");
         viewButton.addActionListener(e -> openSelectedStream());
+
+        JButton changeServerButton = new JButton("Schimbă Serverul");
+        changeServerButton.addActionListener(e -> changeServer());
 
         streamerList.addMouseListener(new MouseAdapter() {
             @Override
@@ -42,11 +45,12 @@ public class StreamLobby extends JFrame {
             }
         });
 
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(viewButton, BorderLayout.CENTER);
+        JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
+        bottomPanel.add(viewButton);
+        bottomPanel.add(changeServerButton);
 
         getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(new JLabel("Streameri activi:"), BorderLayout.NORTH);
+        getContentPane().add(new JLabel("Streameri activi pe serverul " + serverIp + ":"), BorderLayout.NORTH);
         getContentPane().add(scrollPane, BorderLayout.CENTER);
         getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 
@@ -64,7 +68,50 @@ public class StreamLobby extends JFrame {
                 this.serverIp = "127.0.0.1";
             }
         }
-        System.out.println("Lobby: Server setat la: " + this.serverIp);
+        updateTitle();
+    }
+
+    private void changeServer() {
+        // Cautam servere
+        List<String> servers = NetworkDiscovery.findAllServers();
+        
+        // Adaugam si optiunea de a introduce manual
+        servers.add("Manual...");
+
+        String[] options = servers.toArray(new String[0]);
+
+        String selected = (String) JOptionPane.showInputDialog(this, 
+                "Selecteaza un server din lista sau introdu manual:",
+                "Schimbare Server",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (selected != null) {
+            if (selected.equals("Manual...")) {
+                String manualIp = JOptionPane.showInputDialog(this, "Introdu IP-ul serverului:");
+                if (manualIp != null && !manualIp.trim().isEmpty()) {
+                    this.serverIp = manualIp.trim();
+                }
+            } else {
+                this.serverIp = selected;
+            }
+            updateTitle();
+            refreshStreamers();
+        }
+    }
+
+    private void updateTitle() {
+        setTitle("Stream Lobby - Conectat la " + serverIp);
+        // Actualizam si label-ul de sus daca exista (putem face asta mai elegant, dar momentan e ok)
+        Component[] comps = getContentPane().getComponents();
+        for (Component c : comps) {
+            if (c instanceof JLabel) {
+                ((JLabel) c).setText("Streameri activi pe serverul " + serverIp + ":");
+                break;
+            }
+        }
     }
 
     private void openSelectedStream() {

@@ -3,7 +3,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 public class NetworkDiscovery {
 
@@ -16,6 +18,19 @@ public class NetworkDiscovery {
      * @return IP-ul serverului sub forma de String, sau null daca nu este gasit.
      */
     public static String findServerIp() {
+        List<String> servers = findAllServers();
+        if (!servers.isEmpty()) {
+            return servers.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Cauta toate serverele disponibile in retea.
+     * @return O lista cu IP-urile serverelor gasite.
+     */
+    public static List<String> findAllServers() {
+        List<String> foundServers = new ArrayList<>();
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
 
@@ -42,21 +57,33 @@ public class NetworkDiscovery {
                 }
             }
 
-            // Asteapta raspuns
-            byte[] recvBuf = new byte[15000];
-            DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
-            socket.setSoTimeout(3000); // Asteapta maxim 3 secunde
-            socket.receive(receivePacket);
+            // Asteapta raspunsuri timp de 2 secunde
+            socket.setSoTimeout(2000);
+            long endTime = System.currentTimeMillis() + 2000;
 
-            String message = new String(receivePacket.getData()).trim();
-            if (message.equals(DISCOVERY_RESPONSE)) {
-                return receivePacket.getAddress().getHostAddress();
+            while (System.currentTimeMillis() < endTime) {
+                try {
+                    byte[] recvBuf = new byte[15000];
+                    DatagramPacket receivePacket = new DatagramPacket(recvBuf, recvBuf.length);
+                    socket.receive(receivePacket);
+
+                    String message = new String(receivePacket.getData()).trim();
+                    if (message.equals(DISCOVERY_RESPONSE)) {
+                        String ip = receivePacket.getAddress().getHostAddress();
+                        if (!foundServers.contains(ip)) {
+                            foundServers.add(ip);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Timeout la receive, continuam sau iesim
+                    break;
+                }
             }
+
         } catch (Exception e) {
-            // Nu a gasit serverul
-            return null;
+            // Eroare generala
         }
-        return null;
+        return foundServers;
     }
 
     public static void startServerListener() {
