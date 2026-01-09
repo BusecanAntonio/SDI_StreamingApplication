@@ -54,10 +54,7 @@ public class LauncherMain {
                 startLobby();
                 startStreamer();
                 break;
-            case 2: // DOAR STREAMER
-                startStreamer();
-                break;
-            case 3: // DOAR LOBBY
+            case 2: // DOAR LOBBY
                 startLobby();
                 break;
             default:

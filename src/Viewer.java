@@ -9,6 +9,9 @@ import java.net.Socket;
 public class Viewer {
 
     public static void startForStreamer(String streamerName, String serverIp) throws Exception {
+        // Dezactivam cache-ul pe disc pentru a evita erorile de permisiuni si pentru viteza
+        ImageIO.setUseCache(false);
+
         Socket socket = new Socket(serverIp, 5000);
 
         OutputStream out = socket.getOutputStream();
