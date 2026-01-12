@@ -54,11 +54,11 @@ public class LauncherMain {
                 startLobby();
                 startStreamer();
                 break;
-            case 2: // DOAR LOBBY
-                startLobby();
-                break;
-            case 3: // DOAR STREAMER
+            case 2: // DOAR STREAMER (Corectat conform array-ului options)
                 startStreamer();
+                break;
+            case 3: // DOAR LOBBY (Corectat conform array-ului options)
+                startLobby();
                 break;
             default:
                 System.exit(0);
