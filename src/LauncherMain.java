@@ -57,6 +57,9 @@ public class LauncherMain {
             case 2: // DOAR LOBBY
                 startLobby();
                 break;
+            case 3: // DOAR STREAMER
+                startStreamer();
+                break;
             default:
                 System.exit(0);
         }
